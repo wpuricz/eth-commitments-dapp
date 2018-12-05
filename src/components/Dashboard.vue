@@ -5,6 +5,7 @@
       Welcome {{ pseudo }}. Destroy your account by clicking <a href="#" @click="destroyAccount">here</a>.
     </div>
     <div v-else>Sign up <router-link to="/signup">here</router-link>.</div>
+    <div><router-link to="/dash">Dashboard</router-link></div>
   </div>
 </template>
 
@@ -15,7 +16,7 @@ export default {
   name: 'dashboard',
   data () {
     return {
-      msg: 'Welcome to your truffle-vue dApp',
+      msg: 'Welcome to your commitment dApp',
       pseudo: undefined
     }
   },
