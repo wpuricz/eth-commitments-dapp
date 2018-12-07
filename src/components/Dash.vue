@@ -10,11 +10,27 @@
       <input name="deadline" v-model="deadline"/><br/>
     </div>
     <b-button @click="addCommitment" size="" variant="primary">Add Commitment</b-button>
+    
   </div>
 </template>
 
 
 <script>
+// Datetime picker
+//https://www.npmjs.com/package/vue-bootstrap-datetimepicker
+//https://jsfiddle.net/ankurk91/01407frf/
+
+// Import required dependencies 
+import 'bootstrap/dist/css/bootstrap.css';
+
+// Import this component
+import datePicker from 'vue-bootstrap-datetimepicker';
+
+// Import date picker css
+import 'pc-bootstrap4-datetimepicker/build/css/bootstrap-datetimepicker.css';
+
+import contract from 'truffle-contract'
+import CommitmentsContract from '@contracts/Commitments.json'
 
 export default {
   name: 'Dash',
@@ -23,24 +39,82 @@ export default {
       msg: 'Hello',
       description: '',
       amount: '',
-      deadline: ''
+      deadline: '',
+      instance: null,
+      
+      date: new Date(),
+        options: {
+          format: 'DD/MM/YYYY',
+          useCurrent: false,
+        } 
+
     }
   },
+  components: {
+    datePicker
+  },
+  created: function() {
+    
+    // initialize the contract
+    var commitContract = contract(CommitmentsContract)
+    commitContract.setProvider(window.web3.currentProvider)
+    window.web3.eth.defaultAccount = window.web3.eth.accounts[0]
+
+    // get an instance of the contract
+    commitContract.deployed().then(returnInstance => {
+      this.instance = returnInstance
+      console.log("Commit contract initialized")
+      //this.instance.LogNewPerson()
+      //this.getPeopleList()
+    }).catch(e => {
+      alert("error getting contract. Did you do 'truffle migrate'?")
+    })
+    
+  },
   methods: {
-    addCommitment () {
+    async addCommitment () {
       if (this.description === '') {
-        alert('error')
+        alert('description cannot be empty')
         return
       }
-      if (this.amount < 1) {
-        alert('error')
+      if (isNaN(this.amount) || this.amount <= 0) {
+        alert('enter a valid amount, greater than zero')
         return
       }
-      if (this.deadline <= new Date()) {
-        alert('error')
+      // TODO: Date must be at least a day in advance
+      if ( isNaN(Date.parse(this.deadline)) || this.deadline <= new Date()) {
+        alert('deadline must be greater than now')
         return
       }
-      alert('hello')
+      let deadlineDate = new Date(this.deadline) / 1000
+      
+      let recipient = window.web3.eth.accounts[1]
+      let referee = "0x0000000000000000000000000000000000000000"
+      // TODO: Allow input in dollars and convert to ether on submit
+      let etherAmount = window.web3.toWei(parseInt(this.amount),'ether')
+      let currentUser = web3.eth.accounts[0]
+      let response;
+
+      try {
+        response = await this.instance.addCommitment(
+          this.description,
+          deadlineDate,
+          etherAmount,
+          recipient,
+          currentUser,
+          referee,
+          {from: currentUser, gas: 200000}
+          )
+        console.log(response)
+        alert('success:')
+      }catch(err) {
+        alert("error")
+        console.log(err)
+      }
+
+    },
+    async convertUSDtoEther() {
+
     }
   }
 }
