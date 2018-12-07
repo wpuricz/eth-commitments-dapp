@@ -7,6 +7,11 @@ import router from './router'
 
 Vue.config.productionTip = false
 
+import BootstrapVue from 'bootstrap-vue'
+Vue.use(BootstrapVue)
+
+import 'bootstrap/dist/css/bootstrap.css'
+
 window.addEventListener('load', function () {
   if (typeof web3 !== 'undefined') {
     console.log('Web3 injected browser: OK.')

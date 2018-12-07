@@ -1,7 +1,15 @@
 <template>
   <div class="Dash">
     Hello  {{msg}}
-
+     <div class="product-form">
+      <label for="description">Description</label>
+      <textarea name="description" v-model="description" style="width:300px;height:100px"/><br/>
+      <label for="amount">Amount</label>
+      <input name="amount" v-model="amount"/><br/>
+      <label for="deadline">Deadline</label>
+      <input name="deadline" v-model="deadline"/><br/>
+    </div>
+    <b-button @click="addCommitment" size="" variant="primary">Add Commitment</b-button>
   </div>
 </template>
 
@@ -12,11 +20,28 @@ export default {
   name: 'Dash',
   data () {
     return {
-      msg: 'Hello'
+      msg: 'Hello',
+      description: '',
+      amount: '',
+      deadline: ''
     }
   },
   methods: {
-
+    addCommitment () {
+      if (this.description === '') {
+        alert('error')
+        return
+      }
+      if (this.amount < 1) {
+        alert('error')
+        return
+      }
+      if (this.deadline <= new Date()) {
+        alert('error')
+        return
+      }
+      alert('hello')
+    }
   }
 }
 </script>
