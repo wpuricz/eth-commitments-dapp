@@ -4,7 +4,12 @@ contract Commitments {
     
     enum CommitmentStatus { proposed, active, finished, pending, verified }
 
+    mapping(uint => Commitment) private commitments;
+
     string public name;
+    uint private transactionId;
+
+    event CommitmentCreated(uint transactionId);
     
     struct Commitment {
         string description;
@@ -16,10 +21,10 @@ contract Commitments {
         CommitmentStatus status;
         bool completed;
     }
-    Commitment[] public commits;
 
     constructor() public {
         name = "will";
+        transactionId = 0;
     }
 
     function addCommitment(
@@ -27,24 +32,34 @@ contract Commitments {
         uint _dueDate, 
         uint _stake, 
         address _stakeRecipient,  
-        address _commitmentPerson,
         address _referee ) public  {
+
         require(keccak256(_description) != keccak256(""));
         require(_dueDate > now);
         require(_stake > 0);
-        
-        
-        Commitment memory commitment;
+
+        Commitment commitment;
         commitment.description = _description;
         commitment.dueDate = _dueDate;
         commitment.stake = _stake;
         commitment.stakeRecipient = _stakeRecipient;
         commitment.referee = _referee;
-        commitment.commitmentPerson = _commitmentPerson;
+        commitment.commitmentPerson = msg.sender;
         commitment.status = CommitmentStatus.active;
         commitment.completed = false;
-        commits.push(commitment);    
-        
+        commitments[transactionId] = commitment;  
+        transactionId++;
+        //emit CommitmentCreated(transactionId);  
+    }
+
+    function updateTransaction(uint transactionId, uint status) {
+        // check msg.sender
+        require(status >= 0 && status <= uint(CommitmentStatus.verified));
+        Commitment c = commitments[transactionId];
+        c.status = CommitmentStatus(status);
+        commitments[transactionId] = c;
+        // emit event here
+
     }
 
     

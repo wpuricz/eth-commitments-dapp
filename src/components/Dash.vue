@@ -1,15 +1,35 @@
 <template>
   <div class="Dash">
     Hello  {{msg}}
-     <div class="product-form">
-      <label for="description">Description</label>
-      <textarea name="description" v-model="description" style="width:300px;height:100px"/><br/>
-      <label for="amount">Amount</label>
-      <input name="amount" v-model="amount"/><br/>
-      <label for="deadline">Deadline</label>
-      <input name="deadline" v-model="deadline"/><br/>
+     <form>
+       <div class="form-group row">
+        <label for="description" class="col-sm-2 col-form-label">Description</label>
+        <div class="col-sm-4">
+          <!-- <input class="form-control" id="description" placeholder="Description"> -->
+          <textarea name="description" class="form-control" v-model="description" style="height:160px"/><br/>          
+        </div>
+       </div>
+      <div class="form-group row">
+        <label for="amount" class="col-sm-2 col-form-label">Amount ($USD)</label>
+        <div class="col-sm-4">
+          <input class="form-control" v-model="amount" id="amount" placeholder="1.00">
+        </div>
+      </div>
+      <div class="form-group row">
+        <label for="deadline" class="col-sm-2 col-form-label">Deadline</label>
+        <div class="col-sm-4">
+          <input class="form-control" id="deadline" v-model="deadline" placeholder="">
+        </div>
+      </div>
+      <div class="form-group row">
+        <div class="col-sm-4">
+          <button @click.prevent="addCommitment" type="submit" class="btn btn-primary">Submit</button>
+        </div>
+      </div>
+     </form>
+     <div v-if="errorMessage != ''" class="alert alert-light processing" role="alert">
+      {{errorMessage}}
     </div>
-    <b-button @click="addCommitment" size="" variant="primary">Add Commitment</b-button>
     
   </div>
 </template>
@@ -19,7 +39,7 @@
 // Datetime picker
 //https://www.npmjs.com/package/vue-bootstrap-datetimepicker
 //https://jsfiddle.net/ankurk91/01407frf/
-
+import axios from 'axios';
 // Import required dependencies 
 import 'bootstrap/dist/css/bootstrap.css';
 
@@ -41,7 +61,8 @@ export default {
       amount: '',
       deadline: '',
       instance: null,
-      
+      //formError: false,
+      errorMessage: '',
       date: new Date(),
         options: {
           format: 'DD/MM/YYYY',
@@ -53,7 +74,7 @@ export default {
   components: {
     datePicker
   },
-  created: function() {
+  created: async function() {
     
     // initialize the contract
     var commitContract = contract(CommitmentsContract)
@@ -61,31 +82,48 @@ export default {
     window.web3.eth.defaultAccount = window.web3.eth.accounts[0]
 
     // get an instance of the contract
-    commitContract.deployed().then(returnInstance => {
+    try{
+      let returnInstance = commitContract.deployed()
       this.instance = returnInstance
       console.log("Commit contract initialized")
-      //this.instance.LogNewPerson()
-      //this.getPeopleList()
-    }).catch(e => {
+    }catch(e) {
       alert("error getting contract. Did you do 'truffle migrate'?")
-    })
-    
+    }
+
   },
   methods: {
     async addCommitment () {
       if (this.description === '') {
-        alert('description cannot be empty')
+        this.errorMessage = "description cannot be empty"
         return
       }
-      if (isNaN(this.amount) || this.amount <= 0) {
-        alert('enter a valid amount, greater than zero')
+      let amt = parseFloat(this.amount)
+      //console.log("amt:" + amt)
+      if (isNaN(amt) || amt <= 0) {
+        this.errorMessage = 'enter a valid amount, greater than zero'
         return
       }
+      //console.log("amount is success")
       // TODO: Date must be at least a day in advance
       if ( isNaN(Date.parse(this.deadline)) || this.deadline <= new Date()) {
-        alert('deadline must be greater than now')
+        this.errorMessage = 'deadline must be greater than now'
         return
       }
+      
+      // validate if the user has enough eth
+      try{
+        let canbuy = await this.convertUSDtoEther(amt)
+        if(!canbuy) {
+          this.errorMessage = 'not enough funds'
+          return
+        }
+      }catch(err) {
+        this.errorMessage = "Could not fetch price"
+        return
+        console.log("coincap: " + err)
+      }
+      this.errorMessage = ''
+
       let deadlineDate = new Date(this.deadline) / 1000
       
       let recipient = window.web3.eth.accounts[1]
@@ -113,7 +151,25 @@ export default {
       }
 
     },
-    async convertUSDtoEther() {
+    async convertUSDtoEther(amount) {
+      const url = "https://api.coinmarketcap.com/v1/ticker/ethereum/"
+      try {
+        let response = await axios.get(url)
+        let ethPrice = response.data[0].price_usd
+        let ethAmount = (amount / ethPrice).toFixed(2)
+        console.log("ethAmt: " + ethAmount)
+        let ethBalance = web3.fromWei(web3.eth.getBalance(web3.eth.accounts[0]),"ether").toString()
+        console.log("ethBalance: " + ethBalance)
+        if(parseFloat(ethBalance) > parseFloat(ethAmount)) {
+          return true
+        }else{
+          return false
+        }
+        
+      }catch(err) {
+        console.log("error fetching eth price: " + err)
+        throw err
+      }
 
     }
   }
