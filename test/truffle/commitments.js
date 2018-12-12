@@ -11,9 +11,9 @@ contract('Commitments', function ([accounts,owner])  {
         assert.ok(c.address);   
     });
 
-    it('name equals will', async function () {
-        assert.equal(await c.name(), "will")
-    })
+    // it('name equals will', async function () {
+    //     assert.equal(await c.name(), "will")
+    // })
     
     it('should create a commitment', async () => {
         let description = "test commitment"
@@ -26,6 +26,20 @@ contract('Commitments', function ([accounts,owner])  {
             assert(true)
         }catch(err){
             assert(false)
+        }
+    });
+
+    it('should get a commitment of id 1', async () => {
+        try{
+            let response = await c.getCommitment(0);
+            console.log(response)
+            if(web3.toAscii(response[0]) === "test commitment") {
+                assert(true);
+            }else{
+                assert(false);
+            }
+        }catch(err) {
+            assert(false);
         }
     });
 

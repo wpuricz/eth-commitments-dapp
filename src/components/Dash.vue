@@ -139,7 +139,6 @@ export default {
           deadlineDate,
           etherAmount,
           recipient,
-          currentUser,
           referee,
           {from: currentUser, gas: 200000}
           )

@@ -3,16 +3,15 @@ pragma solidity ^0.4.21;
 contract Commitments {
     
     enum CommitmentStatus { proposed, active, finished, pending, verified }
-
-    mapping(uint => Commitment) private commitments;
-
-    string public name;
-    uint private transactionId;
+    Commitment[] public commitments;
+    mapping(uint => Commitment) private commitmentMap;
+    uint[] private commitmentIndex;
 
     event CommitmentCreated(uint transactionId);
     
     struct Commitment {
-        string description;
+        uint index;
+        bytes32 description;
         uint dueDate;
         uint stake;
         address stakeRecipient;
@@ -23,22 +22,22 @@ contract Commitments {
     }
 
     constructor() public {
-        name = "will";
-        transactionId = 0;
     }
 
     function addCommitment(
-        string _description, 
+        bytes32 _description, 
         uint _dueDate, 
         uint _stake, 
         address _stakeRecipient,  
-        address _referee ) public  {
+        address _referee ) public returns(uint index) {
 
-        require(keccak256(_description) != keccak256(""));
+        //require(keccak256(_description) != keccak256(""));
+        //TODO: Check for empty description
         require(_dueDate > now);
         require(_stake > 0);
 
-        Commitment commitment;
+        Commitment memory commitment;
+        commitment.index = commitmentIndex.push(commitmentIndex.length)-1;
         commitment.description = _description;
         commitment.dueDate = _dueDate;
         commitment.stake = _stake;
@@ -47,26 +46,59 @@ contract Commitments {
         commitment.commitmentPerson = msg.sender;
         commitment.status = CommitmentStatus.active;
         commitment.completed = false;
-        commitments[transactionId] = commitment;  
-        transactionId++;
+        commitmentMap[commitment.index] = commitment;  
+        commitments.push(commitment);
         //emit CommitmentCreated(transactionId);  
+        return commitmentIndex.length -1;
     }
 
-    function updateTransaction(uint transactionId, uint status) {
+    function getCommitment(uint _transactionId) public view returns( bytes32 description, uint stake) {
+        return(
+            commitmentMap[_transactionId].description,
+            commitmentMap[_transactionId].stake
+        );
+    }
+
+    function updateTransaction(uint _transactionId, uint _status) public {
         // check msg.sender
-        require(status >= 0 && status <= uint(CommitmentStatus.verified));
-        Commitment c = commitments[transactionId];
-        c.status = CommitmentStatus(status);
-        commitments[transactionId] = c;
+        require(_status >= 0 && _status <= uint(CommitmentStatus.verified));
+        //commitmentMap[_transactionId].stake = _stake;//CommitmentStatus(_status);
+        Commitment memory c = commitments[_transactionId];
+        c.status = CommitmentStatus(_status);
+        commitments[_transactionId] = c;
+        commitmentMap[_transactionId] = c; //do i need this also?
         // emit event here
 
     }
 
-    
+    function getCommitmentCount() public constant returns(uint count) {
+        return commitmentIndex.length;
+    }
 
-    
+    function getAllCommitments() public constant returns (bytes32[], uint[], address[], uint[]) {
 
+        uint length = getCommitmentCount();
+
+        bytes32[] memory descriptions = new bytes32[](length);
+        uint[] memory stakes = new uint[](length);
+        address[] memory recipients = new address[](length);
+        uint[] memory statuses = new uint[](length);
+
+        for(uint i=0; i<length; i++) {
+            Commitment memory commitment;
+            commitment = commitments[i];
+
+            descriptions[i] = commitment.description;
+            stakes[i] = commitment.stake;
+            recipients[i] = commitment.stakeRecipient;
+            statuses[i] = uint(commitment.status);
+        }
+
+        return (descriptions, stakes, recipients, statuses);
+
+    }
 
 }
 
 //https://ethereum.stackexchange.com/questions/32173/how-to-handle-dates-in-solidity-and-web3
+//https://ethereum.stackexchange.com/questions/19502/passing-string-object-with-0x-value-as-bytes32-to-a-solidity-function?rq=1
