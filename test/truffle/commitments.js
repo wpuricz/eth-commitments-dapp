@@ -29,18 +29,18 @@ contract('Commitments', function ([accounts,owner])  {
         }
     });
 
-    it('should get a commitment of id 1', async () => {
-        try{
-            let response = await c.getCommitment(0);
-            console.log(response)
-            if(web3.toAscii(response[0]) === "test commitment") {
-                assert(true);
-            }else{
-                assert(false);
-            }
-        }catch(err) {
-            assert(false);
-        }
-    });
+    // it('should get a commitment of id 1', async () => {
+    //     try{
+    //         let response = await c.getCommitment(0);
+    //         console.log(response)
+    //         if(web3.toAscii(response[0]) === "test commitment") {
+    //             assert(true);
+    //         }else{
+    //             assert(false);
+    //         }
+    //     }catch(err) {
+    //         assert(false);
+    //     }
+    // });
 
 });

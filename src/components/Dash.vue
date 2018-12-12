@@ -30,7 +30,18 @@
      <div v-if="errorMessage != ''" class="alert alert-light processing" role="alert">
       {{errorMessage}}
     </div>
-    
+
+    <!-- Table Listing Here -->
+    <table>
+      <tr>
+        <th>Description</th> <th>Stakes</th> <th>Delete</th>
+      </tr>
+      <tr v-for="(description,index) in descriptions" :key="description.id">
+        <td>{{ convertAscii(descriptions[index]) }}</td>
+        <td>{{ stakes[index] }}</td>
+        <td><b-button @click="deleteItem(index)" size="sm" variant="primary">Delete</b-button></td>
+      </tr>
+    </table>
   </div>
 </template>
 
@@ -62,6 +73,8 @@ export default {
       deadline: '',
       instance: null,
       //formError: false,
+      descriptions:[],
+      stakes:[],
       errorMessage: '',
       date: new Date(),
         options: {
@@ -80,18 +93,36 @@ export default {
     var commitContract = contract(CommitmentsContract)
     commitContract.setProvider(window.web3.currentProvider)
     window.web3.eth.defaultAccount = window.web3.eth.accounts[0]
-
+ 
     // get an instance of the contract
     try{
-      let returnInstance = commitContract.deployed()
+      let returnInstance = await commitContract.deployed()
       this.instance = returnInstance
       console.log("Commit contract initialized")
+      //console.log(this.instance.getCommitmentList)
+      this.getCommitmentList()
     }catch(e) {
       alert("error getting contract. Did you do 'truffle migrate'?")
     }
 
+    
+
   },
   methods: {
+    convertAscii: function(bytes32Address) {
+      return window.web3.toAscii(bytes32Address)
+    },
+    async getCommitmentList () {
+      
+      let data = await this.instance.getAllCommitments()
+      this.descriptions = String(data[0]).split(',')
+      this.stakes = String(data[1]).split(',')
+      
+      console.log(this.descriptions)
+      console.log(this.stakes)
+      //console.log(this.indexes)
+      
+    },
     async addCommitment () {
       if (this.description === '') {
         this.errorMessage = "description cannot be empty"
@@ -140,7 +171,7 @@ export default {
           etherAmount,
           recipient,
           referee,
-          {from: currentUser, gas: 200000}
+          {from: currentUser, gas: 2000000}
           )
         console.log(response)
         alert('success:')
