@@ -14,6 +14,7 @@
         <div class="col-sm-4">
           <input class="form-control" v-model="amount" id="amount" placeholder="1.00">
         </div>
+        <span class="col-sm-1"> {{this.convertUSDtoEther(this.amount).toFixed(3)}} ETH </span>
       </div>
       <div class="form-group row">
         <label for="deadline" class="col-sm-2 col-form-label">Deadline</label>
@@ -30,15 +31,21 @@
      <div v-if="errorMessage != ''" class="alert alert-light processing" role="alert">
       {{errorMessage}}
     </div>
-
+    <br/><br/>
     <!-- Table Listing Here -->
-    <table>
+    <table class="table table-bordred table-striped product-table col-sm-10">
       <tr>
-        <th>Description</th> <th>Stakes</th> <th>Delete</th>
+        <th>Description</th> 
+        <th>Stakes</th>
+        <th>Recipient</th> 
+        <th>Status</th> 
+        <th>Delete</th>
       </tr>
       <tr v-for="(description,index) in descriptions" :key="description.id">
         <td>{{ convertAscii(descriptions[index]) }}</td>
         <td>{{ stakes[index] }}</td>
+        <td>{{ recipients[index] }}</td>
+        <td>{{ statusDescriptions[statuses[index]] }}</td>
         <td><b-button @click="deleteItem(index)" size="sm" variant="primary">Delete</b-button></td>
       </tr>
     </table>
@@ -72,10 +79,14 @@ export default {
       amount: '',
       deadline: '',
       instance: null,
+      currentEthPrice:null,
       //formError: false,
       descriptions:[],
       stakes:[],
+      statuses:[],
+      recipients:[],
       errorMessage: '',
+      statusDescriptions:["Proposed", "Active", "Finished", "Pending", "Verified"],
       date: new Date(),
         options: {
           format: 'DD/MM/YYYY',
@@ -100,23 +111,31 @@ export default {
       this.instance = returnInstance
       console.log("Commit contract initialized")
       //console.log(this.instance.getCommitmentList)
+      this.getEthPrice()
       this.getCommitmentList()
     }catch(e) {
       alert("error getting contract. Did you do 'truffle migrate'?")
     }
-
-    
+    // Listen for events
+    // https://web3js.readthedocs.io/en/1.0/web3-eth-contract.html#id36
+    // https://ethereum.stackexchange.com/questions/35997/how-to-listen-to-events-using-web3-v1-0
+    // https://github.com/morrislaptop/vue-web3/blob/master/src/index.js
 
   },
   methods: {
-    convertAscii: function(bytes32Address) {
+    convertAscii (bytes32Address) {
       return window.web3.toAscii(bytes32Address)
+    },
+    convertToEther(wei) {
+      return web3.fromWei(wei,"ether")
     },
     async getCommitmentList () {
       
       let data = await this.instance.getAllCommitments()
       this.descriptions = String(data[0]).split(',')
       this.stakes = String(data[1]).split(',')
+      this.recipients = String(data[2]).split(',')
+      this.statuses = String(data[3]).split(',')
       
       console.log(this.descriptions)
       console.log(this.stakes)
@@ -181,24 +200,26 @@ export default {
       }
 
     },
-    async convertUSDtoEther(amount) {
+    async getEthPrice() {
       const url = "https://api.coinmarketcap.com/v1/ticker/ethereum/"
       try {
         let response = await axios.get(url)
-        let ethPrice = response.data[0].price_usd
-        let ethAmount = (amount / ethPrice).toFixed(2)
-        console.log("ethAmt: " + ethAmount)
-        let ethBalance = web3.fromWei(web3.eth.getBalance(web3.eth.accounts[0]),"ether").toString()
-        console.log("ethBalance: " + ethBalance)
-        if(parseFloat(ethBalance) > parseFloat(ethAmount)) {
-          return true
-        }else{
-          return false
-        }
-        
+        this.currentEthPrice = response.data[0].price_usd
       }catch(err) {
-        console.log("error fetching eth price: " + err)
-        throw err
+        this.currentEthPrice = null
+      }
+    },
+    convertUSDtoEther(dollarAmt) {
+      return (dollarAmt/this.currentEthPrice)
+    },
+    async validateEthAmount(amount) {
+      let ethAmount = convertUSDtoEther(amount)
+      let ethBalance = web3.fromWei(web3.eth.getBalance(web3.eth.accounts[0]),"ether").toString()
+      console.log("ethBalance: " + ethBalance)
+      if(parseFloat(ethBalance) > parseFloat(ethAmount)) {
+        return true
+      }else{
+        return false
       }
 
     }
