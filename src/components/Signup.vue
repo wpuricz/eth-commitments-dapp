@@ -23,17 +23,28 @@
         }
       }
     },
-    beforeCreate: function () {
-      Users.init()
+    created: async function () {
+      window.web3.eth.defaultAccount = window.web3.eth.accounts[0]
+      let instance = await Users.init()
+      console.log("users contract initialized")
+      
+      if(await Users.exists(web3.eth.defaultAccount)) {
+        this.$router.push('/dash')
+      }
+      
     },
+    
+    
     methods: {
       signup: function () {
         let self = this
         if (typeof this.form.pseudo !== 'undefined' && this.form.pseudo !== '') {
+          
           Users.create(this.form.pseudo).then(tx => {
             console.log(tx)
-            self.$router.push('/')
+            self.$router.push('/dash')
           }).catch(err => {
+            alert(err)
             console.log(err)
           })
         }

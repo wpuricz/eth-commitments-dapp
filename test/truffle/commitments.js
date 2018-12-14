@@ -1,5 +1,5 @@
 var Commitments = artifacts.require("./Commitments.sol");
-
+//truffle test ./test/truffle/commitments.js
 contract('Commitments', function ([accounts,owner])  {
     beforeEach('setup contract for each test', async function () {
         c = await Commitments.new()

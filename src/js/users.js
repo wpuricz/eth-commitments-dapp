@@ -58,7 +58,7 @@ const Users = {
     return new Promise((resolve, reject) => {
       self.instance.create(
         pseudo,
-        {from: window.web3.eth.accounts[0]}
+        {from: window.web3.eth.accounts[0], gas: 2000000}
       ).then(tx => {
         resolve(tx)
       }).catch(err => {
