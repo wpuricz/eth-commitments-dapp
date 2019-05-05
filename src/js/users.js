@@ -57,7 +57,7 @@ const Users = {
 
     return new Promise((resolve, reject) => {
       self.instance.create(
-        pseudo,
+        window.web3.fromAscii(pseudo),
         {from: window.web3.eth.accounts[0], gas: 2000000}
       ).then(tx => {
         resolve(tx)
@@ -79,7 +79,22 @@ const Users = {
         reject(err)
       })
     })
+  },
+
+  findAll: function() {
+    let self = this
+
+    return new Promise((resolve, reject) => {
+      self.instance.getUsers({from: window.web3.eth.accounts[0]})
+      .then(response => {
+        resolve(response)
+      })
+      .catch(err => {
+        reject(err)
+      })
+    })
   }
+
 }
 
 export default Users

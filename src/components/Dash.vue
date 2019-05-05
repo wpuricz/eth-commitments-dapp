@@ -69,6 +69,10 @@ import 'pc-bootstrap4-datetimepicker/build/css/bootstrap-datetimepicker.css';
 
 import contract from 'truffle-contract'
 import CommitmentsContract from '@contracts/Commitments.json'
+import ucontract from 'truffle-contract'
+import UsersContract from '@contracts/Users.json'
+
+//import Users from '@/js/users'
 
 export default {
   name: 'Dash',
@@ -92,7 +96,6 @@ export default {
           format: 'DD/MM/YYYY',
           useCurrent: false,
         } 
-
     }
   },
   components: {
@@ -113,8 +116,35 @@ export default {
       //console.log(this.instance.getCommitmentList)
       this.getEthPrice()
       this.getCommitmentList()
+
     }catch(e) {
       alert("error getting contract. Did you do 'truffle migrate'?")
+    }
+
+    try {
+      // get a list of application users
+      //const user = await Users.init()
+      //let data = await user.findAll()
+      var userContract = ucontract(UsersContract)
+      userContract.setProvider(window.web3.currentProvider)
+      let userInstance = await userContract.deployed()
+      
+      //await userInstance.create(web3.utils('steve'),{from: web3.eth.accounts[1], gas: 2000000})
+      
+      const data = await userInstance.getUsers()
+      
+      let addresses = String(data[0]).split(',')
+      let names = String(data[1]).split(',')
+      console.log("addresses:" + addresses)
+      let mappedNames = names.map(function(elem,idx,array) {
+        return web3.toAscii(elem);
+      });
+
+      
+      console.log("names:" + mappedNames)
+       
+    } catch (err) {
+      console.log("error getting users:" + err)
     }
     // Listen for events
     // https://web3js.readthedocs.io/en/1.0/web3-eth-contract.html#id36
@@ -129,6 +159,7 @@ export default {
     convertToEther(wei) {
       return web3.fromWei(wei,"ether")
     },
+    
     async getCommitmentList () {
       
       let data = await this.instance.getAllCommitments()
