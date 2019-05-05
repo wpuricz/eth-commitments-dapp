@@ -1,4 +1,4 @@
-pragma solidity ^0.4.21;
+pragma solidity ^0.5;
 
 contract Commitments {
     
@@ -25,10 +25,10 @@ contract Commitments {
     }
 
     function addCommitment(
-        bytes32 _description, 
-        uint _dueDate, 
-        uint _stake, 
-        address _stakeRecipient,  
+        bytes32 _description,
+        uint _dueDate,
+        uint _stake,
+        address _stakeRecipient,
         address _referee ) public returns(uint index) {
 
         //require(keccak256(_description) != keccak256(""));
@@ -71,11 +71,11 @@ contract Commitments {
 
     }
 
-    function getCommitmentCount() public constant returns(uint count) {
+    function getCommitmentCount() public view returns(uint count) {
         return commitmentIndex.length;
     }
 
-    function getAllCommitments() public constant returns (bytes32[], uint[], address[], uint[]) {
+    function getAllCommitments() public view returns (bytes32[] memory, uint[] memory, address[] memory, uint[] memory) {
 
         uint length = getCommitmentCount();
 

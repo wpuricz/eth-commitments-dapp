@@ -1,4 +1,4 @@
-pragma solidity ^0.4.21;
+pragma solidity ^0.5;
 
 contract Users {
 
@@ -30,7 +30,7 @@ contract Users {
         return userIndex.length;
     }
 
-    function getUsers() public view returns(address[], bytes32[]) {
+    function getUsers() public view returns(address[] memory, bytes32[] memory) {
         uint length = getUserCount();
         address[] memory addresses = new address[](length);
         bytes32[] memory usernames = new bytes32[](length);
